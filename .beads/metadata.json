@@ -1,0 +1,7 @@
+{
+  "database": "dolt",
+  "backend": "dolt",
+  "dolt_mode": "server",
+  "dolt_database": "intuit_ucp",
+  "project_id": "cc0ed7e7-eb92-472f-ad80-e0149070f3ab"
+}
