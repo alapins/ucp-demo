@@ -106,6 +106,7 @@ services:
       # operator's machine can reach.
       VITE_EVENT_BUS_URL: http://localhost:8100
       VITE_INVOICE_API_URL: http://localhost:8080
+      VITE_AGENT_URL: http://localhost:8200
     ports:
       - "5173:5173"
     depends_on:
@@ -113,4 +114,8 @@ services:
         condition: service_healthy
       # The merchant window lists Invoices from the system of record directly.
       invoice-api:
+        condition: service_healthy
+      # The agent window's Run Agent Now reaches the Agent from the browser, so a
+      # window that is up before the Agent is has a button that cannot work.
+      agent:
         condition: service_healthy

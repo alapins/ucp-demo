@@ -4,6 +4,7 @@ import { Link, Navigate, Route, BrowserRouter, Routes } from "react-router-dom";
 
 import { EventLog } from "./EventLog";
 import { MerchantWindow } from "./MerchantWindow";
+import { RunAgentNow } from "./RunAgentNow";
 import { useEventStream } from "./eventStream";
 import { Window } from "./Window";
 import "./styles.css";
@@ -13,7 +14,15 @@ function AgentWindow() {
   const { events, connection } = useEventStream("agent");
   return (
     <Window title="Agent" connection={connection}>
-      <EventLog events={events} />
+      <section>
+        <h2>Wake the Agent</h2>
+        <RunAgentNow />
+      </section>
+
+      <section>
+        <h2>Activity</h2>
+        <EventLog events={events} />
+      </section>
     </Window>
   );
 }

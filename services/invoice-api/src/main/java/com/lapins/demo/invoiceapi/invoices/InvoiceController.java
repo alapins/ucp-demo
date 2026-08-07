@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Set;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -42,6 +43,23 @@ class InvoiceController {
             request.dueDate(),
             request.allowedPaymentMethods());
     return InvoiceView.of(issued, LocalDate.now());
+  }
+
+  /** How much of the Balance Due to settle. */
+  record PayInvoice(long amountMinorUnits) {}
+
+  /**
+   * Pays an Invoice, in whole or in part.
+   *
+   * <p>Modelled as creating a payment against the Invoice rather than as setting it paid,
+   * because the Merchant records payments and derives Outstanding from them — and because
+   * an Invoice may one day take more than one.
+   */
+  @PostMapping("/{invoiceId}/payments")
+  @ResponseStatus(HttpStatus.CREATED)
+  InvoiceView pay(@PathVariable String invoiceId, @RequestBody PayInvoice request) {
+    Invoice paid = invoicing.pay(invoiceId, request.amountMinorUnits());
+    return InvoiceView.of(paid, LocalDate.now());
   }
 
   /** Every Invoice, or only one Payer's — which is what the UCP layer will ask for. */

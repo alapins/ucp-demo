@@ -40,6 +40,36 @@ side's events. See ADR 0004.
 `docker compose up` orders startup by health, so no service is asked to publish to
 an Event Bus that is not answering yet.
 
+## The cycle
+
+Raise an Invoice in the merchant window, then press **Run Agent Now** in the agent
+window. The Agent reads the Merchant's Discovery Profile, negotiates capabilities,
+searches the Catalog for the Payer's Outstanding Invoices, reaches a Decision on each,
+pays those it may through a UCP Checkout, and then re-reads the Merchant's own records
+to confirm the Invoice is settled rather than assuming it. The Invoice returns to the
+merchant window as **Paid**, arriving by the event stream exactly as a payment made by
+hand would.
+
+The same run can be driven without a browser:
+
+```bash
+curl -X POST localhost:8080/invoices \
+  -H 'Content-Type: application/json' \
+  -d '{"payerEmail":"vampserv@gmail.com","originalTotalMinorUnits":43000}'
+curl -X POST localhost:8200/agent/wake \
+  -H 'Content-Type: application/json' -d '{"because":"Run Agent Now"}'
+```
+
+The Agent holds one API key, and that key names one Payer — `vampserv@gmail.com`. An
+Invoice raised against anybody else is invisible to it, which is the scoping working
+rather than a bug.
+
+**The Policy Engine is a stub**: it allows every Invoice, and says so with the Reason
+Code `NO_POLICY_IN_FORCE`. `services/agent/src/agent/policy.py` is where real
+evaluation goes. Nothing else in the demo is standing in for something — the discovery,
+the Catalog, the Checkout, and the settlement are all real, and the Agent's language
+model does not yet appear at all.
+
 ## The merchant window
 
 The merchant window raises Invoices and lists them. The form takes a Payer email, an
@@ -76,8 +106,13 @@ curl -X POST localhost:8200/demo/ping   # agent
 ```bash
 cd services/event-bus && uv run pytest        # the Event Bus at its HTTP seam
 cd services/invoice-api && ./mvn.sh test      # the Invoice API at its HTTP seam
-cd web && npm run e2e                         # the merchant window, against the real stack
+cd services/ucp-server && uv run pytest       # Catalog and Checkout, Invoice API stubbed
+cd services/agent && uv run pytest            # a Wake through to a verified payment
+cd web && npm run e2e                         # both windows, against the real stack
 ```
+
+`services/ucp-server` also holds tests marked `integration` that run against the real
+Java service; they are excluded by default and run with `uv run pytest -m integration`.
 
 `mvn.sh` runs Maven in a container, so no local JDK is needed — the same assumption
 the Dockerfiles make. `npm run e2e` brings the demo up with `docker compose` if it

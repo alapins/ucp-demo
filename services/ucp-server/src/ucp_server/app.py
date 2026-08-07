@@ -17,9 +17,11 @@ from ucp_server.exceptions import UcpError
 from ucp_server.invoice_api import InvoiceApi
 from ucp_server.payers import Payers
 from ucp_server.routes.catalog import catalog_router
+from ucp_server.routes.checkout import checkout_router
 from ucp_server.routes.discovery import router as discovery_router
 from ucp_server.routes.invoice_extension import router as invoice_extension_router
 from ucp_server.services.catalog_service import CatalogService
+from ucp_server.services.invoice_checkout import InvoiceCheckout
 
 SERVICE = "ucp-server"
 
@@ -90,6 +92,7 @@ def create_app(
     app.include_router(discovery_router)
     app.include_router(invoice_extension_router)
     app.include_router(catalog_router(CatalogService(invoice_api, events), payers))
+    app.include_router(checkout_router(InvoiceCheckout(invoice_api, events), payers))
 
     return app
 

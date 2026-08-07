@@ -144,6 +144,33 @@ public class Invoice {
     return allowedPaymentMethods.stream().sorted().toList();
   }
 
+  /**
+   * Applies a payment, reducing what is still owed.
+   *
+   * <p>The entity takes an amount rather than settling outright, because the Balance Due
+   * is documented as falling below the original total once anything is paid. Nothing in
+   * this demo yet pays a part of an Invoice — UCP Checkout has no way to offer it — but
+   * the constraint belongs to Checkout, not to the record of what is owed.
+   */
+  public void pay(long amountMinorUnits) {
+    if (amountMinorUnits <= 0) {
+      throw new PaymentRefused("a payment must be for a positive amount");
+    }
+    if (!isOutstanding()) {
+      throw new PaymentRefused("Invoice " + docNumber + " is already settled");
+    }
+    if (amountMinorUnits > balanceDueMinorUnits) {
+      throw new PaymentRefused(
+          "paying "
+              + amountMinorUnits
+              + " would overpay Invoice "
+              + docNumber
+              + ", whose Balance Due is "
+              + balanceDueMinorUnits);
+    }
+    balanceDueMinorUnits -= amountMinorUnits;
+  }
+
   /** Money is still owed on this Invoice. */
   public boolean isOutstanding() {
     return balanceDueMinorUnits > 0;

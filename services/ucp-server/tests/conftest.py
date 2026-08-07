@@ -38,6 +38,9 @@ class InvoiceApiStub:
         self._ledger = {}
         self._answering = True
         network.get(f"{INVOICE_API}/invoices").mock(side_effect=self._answer)
+        network.post(url__regex=rf"{INVOICE_API}/invoices/(?P<invoice_id>[^/]+)/payments").mock(
+            side_effect=self._take_payment
+        )
 
     def holds(self, *invoices, against):
         """Record which Invoices the Merchant holds against one Payer."""
@@ -51,6 +54,28 @@ class InvoiceApiStub:
             return httpx.Response(503)
         asked_about = request.url.params.get("payerEmail")
         return httpx.Response(200, json=self._ledger.get(asked_about, []))
+
+    def _take_payment(self, request, invoice_id):
+        """Apply a payment to the ledger, as the real service applies it to its own.
+
+        The stub mutates rather than acknowledging, so that a test asking the Merchant
+        again afterwards is told what a real Merchant would tell it. A verification step
+        that re-reads state proves nothing against a stub that never changed.
+        """
+        if not self._answering:
+            return httpx.Response(503)
+        paying = json.loads(request.content)["amountMinorUnits"]
+        for held in self._ledger.values():
+            for invoice in held:
+                if invoice["id"] != invoice_id:
+                    continue
+                if paying <= 0 or paying > invoice["balanceDueMinorUnits"]:
+                    return httpx.Response(422, json={"message": "payment refused"})
+                invoice["balanceDueMinorUnits"] -= paying
+                invoice["outstanding"] = invoice["balanceDueMinorUnits"] > 0
+                invoice["overdue"] = invoice["overdue"] and invoice["outstanding"]
+                return httpx.Response(201, json=invoice)
+        return httpx.Response(404, json={"message": "no such Invoice"})
 
 
 @pytest.fixture

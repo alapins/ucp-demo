@@ -22,10 +22,13 @@ script, so its modules import each other flatly (`import db`); here they are a
 package, so those became `from ucp_server import db`. Nothing else was touched,
 which is what makes upstream changes still readable as diffs.
 
-Checkout, signing and the AP2 machinery are forked but not yet wired into
-`app.py`. They arrive with the tickets that need them — Checkout in
-`intuit-ucp-90m.7`, Mandate verification in `.8` — and forking them now means
-that work adapts one tree rather than fetching a second copy of it.
+The signing and AP2 machinery is forked but not yet wired into `app.py`. It
+arrives with the ticket that needs it — Mandate verification in `.8` — and
+forking it now means that work adapts one tree rather than fetching a second
+copy of it.
+
+`services/checkout_service.py` stays forked but is **not wired in, and is not
+the Checkout this server serves**. See below.
 
 ## Changed for this demo
 
@@ -58,6 +61,28 @@ The reference's own tests (`integration_test.py`, `signature_integration_test.py
 `ucp_signing_test.py`) are not forked either — they test the flower shop. Their
 integration-test style is nevertheless the model for `tests/`, and their signing
 tests are the pattern to follow for Mandate verification in `.8`.
+
+## Written fresh rather than adapted: Checkout
+
+`services/invoice_checkout.py` and `routes/checkout.py` are this demo's own, and
+the reference `services/checkout_service.py` is left unwired beside them.
+
+The reference prices a Checkout by reading products, inventory and stock out of
+its own SQLite — `_recalculate_totals`, `_validate_inventory` and
+`complete_checkout` all do. That is right for a flower shop, which owns what it
+sells. This Merchant owns no products: an Invoice's Balance Due lives in the
+Invoice API, and seeding it into those tables to satisfy the checkout engine
+would quietly make this server a second system of record, which is the one thing
+the exposure layer must never become.
+
+So the demo's Checkout asks the Invoice API for the Balance Due on the way in and
+asks it again to settle on the way out, and stores only the session joining the
+two. It serves the same paths, from the same Discovery Profile capability, using
+the same SDK `Checkout` model — an Agent cannot tell the difference, which is the
+point.
+
+The fork is kept because `.8` reads it for the AP2 Mandate surface, and because
+the two sitting side by side is the clearest record of why one was not enough.
 
 ## Deliberately absent from `db.py`
 
