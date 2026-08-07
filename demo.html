@@ -1,0 +1,33 @@
+<!doctype html>
+<meta charset="utf-8" />
+<title>Invoice Payment Demo</title>
+<!--
+  Both windows in one tab, for demoing on a single screen.
+
+  Open this file directly; the demo must already be up (`docker compose up --build`).
+  These are the real windows, each in its own frame holding its own Event Bus
+  subscription — so the trust boundary of ADR 0004 is exactly as it is when the two are
+  opened in separate browser windows.
+-->
+<style>
+  html,
+  body {
+    height: 100%;
+    margin: 0;
+    background: #12141a;
+  }
+  body {
+    display: flex;
+  }
+  iframe {
+    flex: 1;
+    height: 100%;
+    border: 0;
+    border-left: 1px solid #262a36;
+  }
+  iframe:first-child {
+    border-left: 0;
+  }
+</style>
+<iframe src="http://localhost:5173/merchant" title="Merchant"></iframe>
+<iframe src="http://localhost:5173/agent" title="Agent"></iframe>

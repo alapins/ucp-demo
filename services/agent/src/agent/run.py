@@ -10,6 +10,8 @@ the Invoice's own id throughout, so the story told here joins the one the Mercha
 services are telling about the same Invoice.
 """
 
+import asyncio
+
 from agent import policy
 from agent.merchant import CannotNegotiate, Merchant
 
@@ -22,12 +24,22 @@ class AgentRun:
     def __init__(self, merchant: Merchant, events):
         self._merchant = merchant
         self._events = events
+        # One run at a time. The Agent has four ways to be woken and they can arrive
+        # together — a human pressing the button while an Invoice-created Wake is in
+        # flight. Two runs overlapping would each discover the same Invoice and the
+        # second would be refused at completion, which reads on screen as a broken
+        # Agent rather than as the double payment it correctly prevented.
+        self._one_run_at_a_time = asyncio.Lock()
 
     async def wake(self, because: str) -> dict:
         """Run once, and report what happened.
 
         The return value is for whoever pressed the button; the events are the demo.
         """
+        async with self._one_run_at_a_time:
+            return await self._run(because)
+
+    async def _run(self, because: str) -> dict:
         await self._events.publish("agent.woke", payload={"because": because})
 
         try:

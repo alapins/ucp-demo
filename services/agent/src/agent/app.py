@@ -15,6 +15,7 @@ from pydantic import BaseModel
 
 from agent.merchant import Merchant
 from agent.run import AgentRun
+from agent.wakes import InvoiceWatch
 
 SERVICE = "agent"
 
@@ -34,23 +35,26 @@ def create_app(
     ucp_server_url: str | None = None,
     event_bus_url: str | None = None,
     api_key: str | None = None,
+    watch_for_invoices: bool = True,
 ) -> FastAPI:
-    events = EventPublisher(
-        bus_url=event_bus_url
-        or os.environ.get("EVENT_BUS_URL", "http://event-bus:8100"),
-        service=SERVICE,
-    )
+    bus_url = event_bus_url or os.environ.get("EVENT_BUS_URL", "http://event-bus:8100")
+    events = EventPublisher(bus_url=bus_url, service=SERVICE)
     merchant = Merchant(
         base_url=ucp_server_url
         or os.environ.get("UCP_SERVER_URL", "http://ucp-server:8000"),
         api_key=api_key or os.environ.get("UCP_API_KEY", ""),
     )
     run = AgentRun(merchant, events)
+    watch = InvoiceWatch(bus_url, run)
 
     @contextlib.asynccontextmanager
     async def lifespan(app: FastAPI):
         await events.publish("service.started", payload={"service": SERVICE})
+        if watch_for_invoices:
+            watch.start()
         yield
+        if watch_for_invoices:
+            await watch.stop()
         await merchant.aclose()
         await events.aclose()
 

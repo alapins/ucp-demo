@@ -42,23 +42,37 @@ an Event Bus that is not answering yet.
 
 ## The cycle
 
-Raise an Invoice in the merchant window, then press **Run Agent Now** in the agent
-window. The Agent reads the Merchant's Discovery Profile, negotiates capabilities,
+Raise an Invoice in the merchant window and the Agent pays it, with nothing pressed.
+The Agent reads the Merchant's Discovery Profile, negotiates capabilities,
 searches the Catalog for the Payer's Outstanding Invoices, reaches a Decision on each,
 pays those it may through a UCP Checkout, and then re-reads the Merchant's own records
 to confirm the Invoice is settled rather than assuming it. The Invoice returns to the
 merchant window as **Paid**, arriving by the event stream exactly as a payment made by
 hand would.
 
-The same run can be driven without a browser:
+**Run Agent Now** in the agent window raises the same Wake by hand, which is worth
+having when the demo needs to be made to do something on cue. Both can be driven
+without a browser:
 
 ```bash
+# Raising an Invoice is enough; the Agent wakes on its own.
 curl -X POST localhost:8080/invoices \
   -H 'Content-Type: application/json' \
   -d '{"payerEmail":"vampserv@gmail.com","originalTotalMinorUnits":43000}'
+
+# Or wake it by hand.
 curl -X POST localhost:8200/agent/wake \
   -H 'Content-Type: application/json' -d '{"because":"Run Agent Now"}'
 ```
+
+**How the Agent knows an Invoice exists** is the demo's weakest joint, and worth being
+straight about if anyone asks. It watches the Event Bus — which is the Merchant's, and
+which a Payer's Agent would have no place on. In production the notification arrives as
+a webhook the Payer registered, an email, or a scheduled poll of the Catalog. ADR 0004
+already concedes the same compromise in the other direction, where the Agent publishes
+to the Merchant's bus so that one screen can tell the whole story. It is confined to
+`services/agent/src/agent/wakes.py`, and everything downstream of it is the ordinary
+Wake path that Run Agent Now also uses.
 
 The Agent holds one API key, and that key names one Payer — `vampserv@gmail.com`. An
 Invoice raised against anybody else is invisible to it, which is the scoping working
