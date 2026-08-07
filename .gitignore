@@ -1,6 +1,27 @@
 
+# Secrets loaded by direnv. The file says it must never be committed; this is what
+# makes that true rather than merely stated.
+.env
+
 # Beads / Dolt files (added by bd init)
 .dolt/
 *.db
 .beads-credential-key
 .beads/proxieddb/
+
+
+# APM dependencies
+apm_modules/
+
+# Build output
+.venv/
+__pycache__/
+.pytest_cache/
+node_modules/
+dist/
+*.tsbuildinfo
+target/
+
+# Playwright run artefacts
+test-results/
+playwright-report/

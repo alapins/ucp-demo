@@ -1,0 +1,152 @@
+:root {
+  --bg: #12141a;
+  --panel: #1a1d26;
+  --ink: #e6e8ef;
+  --quiet: #7b8194;
+  --line: #262a36;
+  color-scheme: dark;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font: 14px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+.window {
+  max-width: 60rem;
+  margin: 0 auto;
+  padding: 1.5rem;
+}
+
+header {
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 0.75rem;
+}
+
+h1 {
+  font-size: 1.1rem;
+  margin: 0;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.connection {
+  font-size: 0.75rem;
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+}
+.connection.live { color: #5ad18e; }
+.connection.connecting { color: #d1bf5a; }
+.connection.reconnecting { color: #d17a5a; }
+
+.quiet { color: var(--quiet); }
+
+section { margin-top: 1.75rem; }
+
+h2 {
+  font-size: 0.8rem;
+  margin: 0 0 0.75rem;
+  color: var(--quiet);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.raise {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.75rem;
+}
+
+.raise label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.75rem;
+  color: var(--quiet);
+}
+
+.raise input {
+  font: inherit;
+  color: var(--ink);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 0.35rem 0.5rem;
+}
+
+.raise button {
+  font: inherit;
+  color: var(--bg);
+  background: #5ad18e;
+  border: 0;
+  border-radius: 4px;
+  padding: 0.45rem 0.9rem;
+  cursor: pointer;
+}
+.raise button:disabled { opacity: 0.5; cursor: default; }
+
+.refused { color: #d17a5a; }
+
+.invoices {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.invoices th {
+  text-align: left;
+  font-weight: normal;
+  color: var(--quiet);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 0 0.75rem 0.4rem 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.invoices td {
+  padding: 0.4rem 0.75rem 0.4rem 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.doc-number { color: #7aa2f7; }
+.amount { font-variant-numeric: tabular-nums; }
+
+.state.overdue { color: #d17a5a; }
+.state.outstanding { color: #d1bf5a; }
+.state.paid { color: #5ad18e; }
+
+.events {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.events li {
+  display: grid;
+  grid-template-columns: 6rem 8rem 1fr 12rem;
+  gap: 0.75rem;
+  padding: 0.4rem 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.at { color: var(--quiet); }
+
+.service {
+  background: var(--panel);
+  border-radius: 4px;
+  padding: 0 0.4rem;
+  text-align: center;
+}
+.service.invoice-api { color: #7aa2f7; }
+.service.ucp-server { color: #bb9af7; }
+.service.agent { color: #7dcfff; }
+.service.event-bus { color: #9ece6a; }
+
+.correlation { color: var(--quiet); text-align: right; }

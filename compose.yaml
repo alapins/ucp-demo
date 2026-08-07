@@ -1,0 +1,109 @@
+# The whole demo, brought up by one command:  docker compose up --build
+#
+# Ordering is by health rather than by start, so that a service is never asked to
+# publish to an Event Bus that is not answering yet.
+
+name: invoice-payment-demo
+
+services:
+  event-bus:
+    build:
+      context: .
+      dockerfile: services/event-bus/Dockerfile
+    ports:
+      - "8100:8100"
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - import urllib.request; urllib.request.urlopen("http://localhost:8100/health")
+      interval: 2s
+      timeout: 3s
+      retries: 15
+
+  invoice-api:
+    build:
+      context: .
+      dockerfile: services/invoice-api/Dockerfile
+    environment:
+      EVENT_BUS_URL: http://event-bus:8100
+    ports:
+      - "8080:8080"
+    depends_on:
+      event-bus:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8080/health"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  ucp-server:
+    build:
+      context: .
+      dockerfile: services/ucp-server/Dockerfile
+    environment:
+      EVENT_BUS_URL: http://event-bus:8100
+      INVOICE_API_URL: http://invoice-api:8080
+    ports:
+      - "8000:8000"
+    depends_on:
+      event-bus:
+        condition: service_healthy
+      # The UCP Server is an exposure layer over the system of record, so it has
+      # nothing to expose until the Invoice API is answering.
+      invoice-api:
+        condition: service_healthy
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - import urllib.request; urllib.request.urlopen("http://localhost:8000/health")
+      interval: 2s
+      timeout: 3s
+      retries: 15
+
+  agent:
+    build:
+      context: .
+      dockerfile: services/agent/Dockerfile
+    environment:
+      EVENT_BUS_URL: http://event-bus:8100
+      UCP_SERVER_URL: http://ucp-server:8000
+    ports:
+      - "8200:8200"
+    depends_on:
+      event-bus:
+        condition: service_healthy
+      # The Agent reaches the Merchant only over UCP, never directly.
+      ucp-server:
+        condition: service_healthy
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - import urllib.request; urllib.request.urlopen("http://localhost:8200/health")
+      interval: 2s
+      timeout: 3s
+      retries: 15
+
+  web:
+    build:
+      context: .
+      dockerfile: web/Dockerfile
+    environment:
+      # Read by the browser, not by the container, so these must be addresses the
+      # operator's machine can reach.
+      VITE_EVENT_BUS_URL: http://localhost:8100
+      VITE_INVOICE_API_URL: http://localhost:8080
+    ports:
+      - "5173:5173"
+    depends_on:
+      event-bus:
+        condition: service_healthy
+      # The merchant window lists Invoices from the system of record directly.
+      invoice-api:
+        condition: service_healthy
