@@ -75,3 +75,30 @@ _Add a brief overview of your project architecture_
 ## Conventions & Patterns
 
 _Add your project-specific conventions here_
+
+## Implementing a ticket
+
+Work comes from `bd ready`. Before writing any code for a ticket:
+
+1. `bd show <ticket>` — read it, and follow the `PARENT` link with `bd show <parent>`. The parent is the spec; the ticket alone is not the whole story.
+2. Read `CONTEXT.md` — it is the domain glossary and is binding on naming. Use its terms in code, tests, and commits (a **Payer** is not a "customer"; an **Approval** is not an "override").
+3. Read `docs/adr/` — every ADR there records a decision that **looks wrong without its context**, which is exactly why it was written down. ADR 0001 (Python UCP server, not Node), 0002 (approval is a Wake, never a blocking call), and 0003 (the LLM's confinement, and humans outranking policy) are all decisions a fresh reader would otherwise "fix".
+4. `bd update <ticket> --claim` before starting.
+
+Do not reverse a recorded ADR silently. If implementation shows one is wrong, say so explicitly and get agreement first.
+
+Close only when every acceptance criterion on the ticket actually passes. One ticket per session — start a fresh context for the next one.
+
+## Agent skills
+
+### Issue tracker
+
+Issues live in beads (`bd`), the local Dolt-backed tracker under `.beads/` — issue prefix `intuit-ucp`, no git remote. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+The five canonical triage roles, each label string equal to its name. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context — `CONTEXT.md` and `docs/adr/` at the repo root (created lazily by `/domain-modeling`; their absence is fine). See `docs/agents/domain.md`.
