@@ -93,7 +93,7 @@ Close only when every acceptance criterion on the ticket actually passes. One ti
 
 ### Issue tracker
 
-Issues live in beads (`bd`), the local Dolt-backed tracker under `.beads/` — issue prefix `intuit-ucp`, no git remote. See `docs/agents/issue-tracker.md`.
+Issues live in beads (`bd`), the local Dolt-backed tracker under `.beads/` — issue prefix `intuit-ucp`. The Dolt database has no remote and does not sync, so `.beads/issues.jsonl` and `docs/issues.md` are the only copies that leave this machine. See `docs/agents/issue-tracker.md`.
 
 ### Triage labels
 

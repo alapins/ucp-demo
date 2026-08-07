@@ -38,8 +38,9 @@ This repo's own generated config — `docs/agents/issue-tracker.md`,
 `AGENTS.md` — lives outside `.agents/` and is never touched by apm. Nothing to restore.
 
 Note that `docs/agents/issue-tracker.md` was seeded from the beads template and then
-specialised for this repo (issue prefix `intuit-ucp`, no git remote, `.scratch/` ruled
-out, a triage-query section). Re-running `apply.sh` does not overwrite it. If you
+specialised for this repo (issue prefix `intuit-ucp`, a Dolt database that syncs
+nowhere, `.scratch/` ruled out, a triage-query section). Re-running `apply.sh` does
+not overwrite it. If you
 improve the template here, port the change across deliberately.
 
 ## Upstreaming

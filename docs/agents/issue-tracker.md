@@ -2,11 +2,13 @@
 
 Issues and specs for this repo live in [beads](https://github.com/gastownhall/beads). Use the `bd` CLI for all operations.
 
-Beads is a local-first tracker: issues live in a Dolt database under `.beads/`, sync travels over `refs/dolt/data` on the git remote, and `.beads/issues.jsonl` is a passive export. Do not hand-edit `.beads/issues.jsonl` — it is regenerated.
+Beads is a local-first tracker: issues live in a Dolt database under `.beads/`, and `.beads/issues.jsonl` is a passive export. Do not hand-edit `.beads/issues.jsonl` — it is regenerated.
 
 Issue IDs are `<prefix>-<suffix>`. This repo's `issue_prefix` is **`intuit-ucp`**, so IDs look like `intuit-ucp-a1b2`. Always pass full IDs; there are no bare `#42` numbers.
 
-This repo has **no git remote** — beads is local-only here, and there is nothing to sync or push.
+The repo has a git remote, but **beads does not use it**. No Dolt remote is configured (`bd dolt remote list` is empty) and no `refs/dolt/data` exists on `origin`, so the database under `.beads/dolt/` lives on one machine and syncs nowhere. `.beads/` is gitignored precisely because Dolt is meant to travel by its own protocol rather than as files — so do not `git add -f` it: that commits a live database mid-write, and produces something git cannot usefully diff or restore.
+
+What leaves this machine is the export instead. See **Keeping the issues recoverable** below.
 
 `CLAUDE.md` and `AGENTS.md` make beads the tracker for *all* task tracking in this repo and prohibit TodoWrite, TaskCreate, and markdown TODO files. That rule governs: never fall back to the `.scratch/<feature>/` markdown convention, even though other skills mention it as a default.
 
@@ -79,6 +81,18 @@ bd list --status=open --exclude-label=needs-triage,needs-info,ready-for-agent,re
 
 The other two buckets are `bd list --status=open --label=needs-triage` and `bd list --status=open --label=needs-info` (check the latter for reporter replies with `bd comments <id>`). Sort oldest-first with `--created-before` filters or by reading `created` from `--json`.
 
-## Sync and git authority
+## Keeping the issues recoverable
 
-Beads writes to a local Dolt database, so creating and closing issues is **not** a git operation and needs no push authority. With no remote configured here, there is no sync step at all. The repo's git policy in `CLAUDE.md` still governs: do not commit or push unless explicitly asked.
+Because the database syncs nowhere, the committed export is the only copy anyone else can read. After changing issues, regenerate both:
+
+```bash
+bd export -o .beads/issues.jsonl && python3 scripts/render-issues.py
+```
+
+`.beads/issues.jsonl` is the machine-readable form — one JSON object per line, what `bd import` reads. `docs/issues.md` is the same content rendered for a person, nested the way the issues are nested. Neither is the source of truth; both go stale the moment an issue changes and nobody re-runs the command.
+
+This is a snapshot of the issues table, **not a backup**: it carries no Dolt branches, commit history, or working-set state. If that matters, `bd backup init <path|dolthub-url>` followed by `bd backup sync` is the supported route, and it wants a filesystem path or a DoltHub account rather than the GitHub remote.
+
+## Git authority
+
+Beads writes to a local Dolt database, so creating and closing issues is **not** a git operation and needs no push authority. Committing the regenerated export is, and the repo's git policy in `CLAUDE.md` governs it: do not commit or push unless explicitly asked.
