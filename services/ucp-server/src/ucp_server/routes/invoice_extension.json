@@ -1,0 +1,117 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "{{ENDPOINT}}/ucp/schemas/invoice.json",
+  "name": "com.lapins.demo.invoicing.invoice",
+  "title": "Invoice",
+  "description": "Gives a Catalog product the meaning of an Invoice: a request for payment issued by a Merchant to a Payer, carrying a Doc Number, a Due Date and a Balance Due. The Merchant's invoicing system remains the sole system of record for every field here; this extension exposes those facts and stores none of them.",
+  "requires": {
+    "protocol": { "min": "2026-04-08" },
+    "capabilities": {
+      "dev.ucp.shopping.catalog.search": { "min": "2026-04-08" }
+    }
+  },
+  "$defs": {
+    "merchant": {
+      "type": "object",
+      "description": "The business owed the Balance Due.",
+      "required": ["name"],
+      "properties": {
+        "name": { "type": "string", "description": "Merchant display name." },
+        "contact_email": {
+          "type": "string",
+          "format": "email",
+          "description": "Where a Payer takes a question about this Invoice."
+        },
+        "payment_instructions": {
+          "type": "string",
+          "description": "Free-text instructions the Merchant prints on its Invoices. Advisory: nothing in the protocol reads it."
+        }
+      }
+    },
+    "payer": {
+      "type": "object",
+      "description": "The party that owes the Balance Due. Identified by email because the reference product's Payer arrives on an unauthenticated link and holds no account.",
+      "required": ["email"],
+      "properties": {
+        "email": { "type": "string", "format": "email" }
+      }
+    },
+    "invoice": {
+      "type": "object",
+      "description": "Invoice facts as the Merchant's system of record reports them.",
+      "required": [
+        "doc_number",
+        "due_date",
+        "balance_due",
+        "original_total",
+        "outstanding",
+        "overdue",
+        "merchant",
+        "payer"
+      ],
+      "properties": {
+        "doc_number": {
+          "type": "string",
+          "description": "The human-facing identifier printed on the Invoice. Opaque: not required to be numeric or sequential, and not usable as a sort key."
+        },
+        "due_date": {
+          "type": "string",
+          "format": "date",
+          "description": "The day the Balance Due is payable by, as YYYY-MM-DD."
+        },
+        "balance_due": {
+          "$ref": "https://ucp.dev/2026-04-08/schemas/shopping/types/price.json",
+          "description": "The amount still owed. May be less than original_total when a partial payment has already been applied. This, not original_total, is what paying the Invoice settles."
+        },
+        "original_total": {
+          "$ref": "https://ucp.dev/2026-04-08/schemas/shopping/types/price.json",
+          "description": "What the Invoice was issued for, before any payment."
+        },
+        "outstanding": {
+          "type": "boolean",
+          "description": "Whether the Balance Due is greater than zero."
+        },
+        "overdue": {
+          "type": "boolean",
+          "description": "Whether an Outstanding Invoice's Due Date has passed. Overdue is a kind of Outstanding: a late Invoice is still owed, so both flags are true at once."
+        },
+        "allowed_payment_methods": {
+          "type": "array",
+          "description": "The instruments this Invoice will accept. Not uniform across a Merchant's Invoices.",
+          "items": {
+            "type": "string",
+            "examples": ["BANK", "CARD"]
+          }
+        },
+        "merchant": { "$ref": "#/$defs/merchant" },
+        "payer": { "$ref": "#/$defs/payer" }
+      }
+    },
+    "dev.ucp.shopping.catalog.search": {
+      "title": "Catalog Search with Invoice",
+      "description": "Catalog Search response whose products are Invoices. The extension keys itself by its own reverse-domain name, as the loyalty extension keys its memberships, so a product carrying it cannot collide with another vendor's meaning.",
+      "allOf": [
+        {
+          "$ref": "https://ucp.dev/2026-04-08/schemas/shopping/catalog_search.json#/$defs/search_response"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "products": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "com.lapins.demo.invoicing.invoice": {
+                    "$ref": "#/$defs/invoice",
+                    "ucp_request": "omit"
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

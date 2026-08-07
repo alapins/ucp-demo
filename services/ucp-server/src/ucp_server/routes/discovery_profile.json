@@ -1,0 +1,51 @@
+{
+  "ucp": {
+    "version": "2026-04-08",
+    "services": {
+      "dev.ucp.shopping": [
+        {
+          "version": "2026-04-08",
+          "spec": "https://ucp.dev/2026-04-08/specification/overview",
+          "transport": "rest",
+          "endpoint": "{{ENDPOINT}}",
+          "schema": "https://ucp.dev/2026-04-08/services/shopping/rest.openapi.json"
+        }
+      ]
+    },
+    "capabilities": {
+      "dev.ucp.shopping.catalog.search": [
+        {
+          "version": "2026-04-08",
+          "spec": "https://ucp.dev/2026-04-08/specification/catalog/search",
+          "schema": "https://ucp.dev/2026-04-08/schemas/shopping/catalog_search.json"
+        }
+      ],
+      "dev.ucp.shopping.checkout": [
+        {
+          "version": "2026-04-08",
+          "spec": "https://ucp.dev/2026-04-08/specification/checkout",
+          "schema": "https://ucp.dev/2026-04-08/schemas/shopping/checkout.json"
+        }
+      ],
+      "com.lapins.demo.invoicing.invoice": [
+        {
+          "version": "2026-04-08",
+          "extends": "dev.ucp.shopping.catalog.search",
+          "spec": "{{ENDPOINT}}/ucp/extensions/invoice",
+          "schema": "{{ENDPOINT}}/ucp/schemas/invoice.json"
+        }
+      ]
+    },
+    "payment_handlers": {
+      "dev.mock.payment_handler": [
+        {
+          "id": "mock_payment_handler",
+          "name": "mock_payment_handler",
+          "version": "2026-04-08",
+          "spec": "https://ucp.dev/2026-04-08/schemas/mock_payment_handler/spec",
+          "config": {}
+        }
+      ]
+    }
+  }
+}

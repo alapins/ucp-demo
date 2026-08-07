@@ -75,6 +75,31 @@ An explicit, named capability the Agent may invoke (Discover Invoices, Evaluate 
 Pay Invoice). Bounds what the Agent is able to do at all.
 _Avoid_: Tool, function, action
 
+## The UCP surface
+
+**Discovery Profile**:
+The document a Merchant publishes at `/.well-known/ucp` declaring its protocol version,
+Capabilities, and the endpoint they are served from. What lets an Agent negotiate with a
+Merchant it has never seen before.
+_Avoid_: Manifest, config, service descriptor
+
+**Capability**:
+A named unit of protocol the Merchant declares it supports (`dev.ucp.shopping.catalog.search`).
+An **extension** is a Capability that declares a parent through `extends`.
+_Avoid_: Feature, endpoint, API
+
+**Catalog**:
+The published Capability through which an Agent searches for what a Merchant offers. Here
+what it offers is Invoices — exposed through the Catalog rather than a bespoke endpoint, so
+any conforming agent can find them.
+_Avoid_: Inventory, product list, search API
+
+**Invoice Extension**:
+`com.lapins.demo.invoicing.invoice` — the vendor extension that gives a Catalog product the
+meaning of an Invoice. Exposes only Invoice fields, delegates every search to the Invoice
+API, and stores nothing.
+_Avoid_: Invoice adapter, invoice schema, custom fields
+
 ## Payment
 
 **Checkout**:

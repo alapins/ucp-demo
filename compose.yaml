@@ -46,6 +46,10 @@ services:
     environment:
       EVENT_BUS_URL: http://event-bus:8100
       INVOICE_API_URL: http://invoice-api:8080
+      # Which Payer an API key acts for, as `key:email` pairs. The whole of the
+      # Agent's authentication: identity linking and OAuth are out of scope, and
+      # the key's only job is to scope a Catalog search to one Payer's Invoices.
+      UCP_API_KEYS: demo-agent-key:vampserv@gmail.com
     ports:
       - "8000:8000"
     depends_on:
@@ -72,6 +76,9 @@ services:
     environment:
       EVENT_BUS_URL: http://event-bus:8100
       UCP_SERVER_URL: http://ucp-server:8000
+      # The other half of the pair above: this is what the Agent presents, and it
+      # is what tells the Merchant whose Invoices to answer with.
+      UCP_API_KEY: demo-agent-key
     ports:
       - "8200:8200"
     depends_on:
