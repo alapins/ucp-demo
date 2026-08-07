@@ -1,0 +1,177 @@
+# apm.yml — snapshot of user-global Claude (~/.claude) as an APM manifest.
+#
+# STAGING BASELINE, not a global config. Purpose: capture everything installed so
+# it can be factored out into profiles later (e.g. a coding profile, a machine-
+# config profile, etc.). Provenance below is verified against upstreams, not guessed.
+#
+# SECRETS: live values in ~/.claude.json (Context7 key, Obsidian token) are NOT
+# copied here — they are ${ENV} references. Supply via direnv/CI:
+#   CONTEXT7_API_KEY, OBSIDIAN_MCP_TOKEN
+#
+# PINS: plugins with a recorded commit are pinned by SHA. mattpocock skills are on
+# default branch (main); pin per-skill refs later if you want byte-for-byte repro.
+
+name: global-claude-baseline
+version: 0.1.0
+description: Everything installed in user-global ~/.claude, as APM dependencies (staging snapshot).
+target: [claude,codex]
+
+dependencies:
+  apm:
+    # ============================ PLUGINS ============================
+    # --- Anthropic official marketplace (anthropics/claude-plugins-official) ---
+    # In-repo plugins (./plugins/<name>)
+    - anthropics/claude-plugins-official/plugins/code-review
+    # anthropics/claude-plugins-official/plugins/claude-md-management   # plugin v1.0.0
+    - anthropics/claude-plugins-official/plugins/skill-creator
+    - anthropics/claude-plugins-official/plugins/ralph-loop             # plugin v1.0.0
+    # anthropics/claude-plugins-official/plugins/typescript-lsp         # plugin v1.0.0
+    # anthropics/claude-plugins-official/plugins/pyright-lsp            # plugin v1.0.0
+
+    # Vendored external plugins (./external_plugins/<name>) — each bundles its MCP
+    - anthropics/claude-plugins-official/external_plugins/github        # bundles GitHub MCP
+    - anthropics/claude-plugins-official/external_plugins/serena        # bundles Serena MCP
+
+    # --- superpowers: its own repo, pinned to the installed commit (v6.1.1) ---
+    #- git: https://github.com/obra/superpowers.git
+    # ref: f2cbfbefebbfef77321e4c9abc9e949826bea9d7
+    # alias: superpowers
+
+    # --- codex plugin (openai-codex marketplace), pinned to installed commit (v1.0.4) ---
+    # NOT managed by apm: installed natively as `codex@openai-codex` (see
+    # ~/.claude/plugins/installed_plugins.json, user scope). apm's command
+    # transformer strips Claude frontmatter keys it doesn't allowlist
+    # (disable-model-invocation, ...), which would make these commands
+    # model-invocable against the author's intent. Letting the native plugin
+    # serve them preserves the frontmatter. Re-enable here only if you drop
+    # the native install.
+    # - git: https://github.com/openai/codex-plugin-cc.git
+    #   path: plugins/codex
+    #   ref: 807e03ac9d5aa23bc395fdec8c3767500a86b3cf
+    #   alias: codex
+
+    # ==================== mattpocock/skills (verified) ====================
+    # ALL non-deprecated upstream skills (deprecated/ category intentionally excluded).
+    # Pinned individually and grouped by upstream category — useful hints when
+    # factoring into profiles. NOTE: `in-progress/` skills are experimental and
+    # churn upstream; pin a specific ref if you need byte-for-byte repro of them.
+    # engineering
+    - mattpocock/skills/skills/engineering/ask-matt
+    - mattpocock/skills/skills/engineering/codebase-design
+    - mattpocock/skills/skills/engineering/code-review
+    - mattpocock/skills/skills/engineering/diagnosing-bugs
+    - mattpocock/skills/skills/engineering/domain-modeling
+    - mattpocock/skills/skills/engineering/grill-with-docs
+    - mattpocock/skills/skills/engineering/implement
+    - mattpocock/skills/skills/engineering/improve-codebase-architecture
+    - mattpocock/skills/skills/engineering/prototype
+    - mattpocock/skills/skills/engineering/research
+    - mattpocock/skills/skills/engineering/resolving-merge-conflicts
+    - mattpocock/skills/skills/engineering/setup-matt-pocock-skills
+    - mattpocock/skills/skills/engineering/tdd
+    - mattpocock/skills/skills/engineering/to-spec
+    - mattpocock/skills/skills/engineering/to-tickets
+    - mattpocock/skills/skills/engineering/triage
+    - mattpocock/skills/skills/engineering/wayfinder
+    # in-progress (experimental — see note above)
+    - mattpocock/skills/skills/in-progress/claude-handoff
+    - mattpocock/skills/skills/in-progress/loop-me
+    - mattpocock/skills/skills/in-progress/setup-ts-deep-modules
+    # - mattpocock/skills/skills/in-progress/wizard
+    - mattpocock/skills/skills/in-progress/writing-beats
+    - mattpocock/skills/skills/in-progress/writing-fragments
+    - mattpocock/skills/skills/in-progress/writing-shape
+    # misc
+    - mattpocock/skills/skills/misc/git-guardrails-claude-code
+    - mattpocock/skills/skills/misc/migrate-to-shoehorn
+    - mattpocock/skills/skills/misc/scaffold-exercises
+    - mattpocock/skills/skills/misc/setup-pre-commit
+    # personal
+    # - mattpocock/skills/skills/personal/edit-article
+    # - mattpocock/skills/skills/personal/obsidian-vault
+    # productivity
+    - mattpocock/skills/skills/productivity/grilling
+    - mattpocock/skills/skills/productivity/grill-me
+    - mattpocock/skills/skills/productivity/handoff
+    - mattpocock/skills/skills/productivity/teach
+    # - mattpocock/skills/skills/productivity/writing-great-skills
+
+    # ==================== skills.sh ecosystem ====================
+    # find-skills: the discovery meta-skill bundled with the `npx skills` CLI.
+    - vercel-labs/skills/skills/find-skills
+
+  mcp:
+    # github + serena MCPs are NOT here — they ride with their plugins above.
+
+    # Context7 docs MCP — remote HTTP; key stays an ${ENV} reference.
+    - name: context7
+      registry: false
+      transport: http
+      url: https://mcp.context7.com/mcp
+      headers:
+        CONTEXT7_API_KEY: "${CONTEXT7_API_KEY}"
+
+    # Obsidian local REST MCP — remote HTTP to the local plugin; token env-referenced.
+    # - name: obsidian
+    #   registry: false
+    #   transport: http
+    #   url: http://127.0.0.1:27123/mcp/
+    #   headers:
+    #     Authorization: "Bearer ${OBSIDIAN_MCP_TOKEN}"
+
+    # codebase-memory-mcp — machine-global static binary (installed by appsync with
+    # --skip-config, so NO global MCP entry/hooks/skills). APM registers it per-project
+    # (this stdio entry writes .mcp.json) and the tool's integration hooks are captured
+    # in ./.apm/hooks/hooks.json (compiled into .claude/settings.json by `apm install`):
+    #   SessionStart  -> cbm-session-reminder.sh   (prefer graph tools; = rules/code-intelligence.md)
+    #   PreToolUse[Grep|Glob] -> cbm-code-discovery-gate.sh (functional: `codebase-memory-mcp hook-augment`)
+    #   SubagentStart -> cbm-subagent-reminder.sh  (subagents don't inherit ~/.claude/rules)
+    # Index each repo with the index_repository tool. Once these per-project hooks are in
+    # use, the global rules/code-intelligence.md becomes redundant (candidate to trim).
+    - name: codebase-memory-mcp
+      registry: false
+      transport: stdio
+      command: codebase-memory-mcp
+
+# =============================================================================
+# GSD (gsd-core) — installer-owned, so it rides a LIFECYCLE hook, NOT dependencies.apm.
+#
+# Declaring GSD under dependencies.apm deploys the repo verbatim → 122 skill/command
+# files keep their literal `~/.claude/gsd-core/{workflows,references,templates}/...` refs
+# and the gsd_run runtime lands in apm_modules/ where the shim never looks. TESTED via
+# scratch `apm install open-gsd/gsd-core` (v1.7.0-rc.5, APM 0.24.1): hooks wire fine, but
+# gsd_run + all content refs are broken. The only thing that rewrites those paths is GSD's
+# OWN installer codegen — `install.js` does content.replace(/\$HOME\/\.claude\//g, pathPrefix)
+# with pathPrefix from --local/--global + CLAUDE_CONFIG_DIR. APM can't run that.
+#
+# So GSD is wired via the block below. `--local` makes GSD's installer rewrite every ref to
+# THIS project's .claude/gsd-core and drop the runtime where gsd_run looks (<root>/.claude/
+# gsd-core/bin) — no RUNTIME_DIR needed. Requires `apm lifecycle trust` once per project
+# (APM hashes the block and won't run it untrusted; re-trust after any edit). Caveats: not
+# tracked in apm.lock (repro comes only from the pinned @version, not APM integrity hashing);
+# needs Node/npx at install time; GSD self-updates on SessionStart regardless; `apm prune`
+# won't remove it (add a post-uninstall if you care).
+# lifecycle:
+ #  post-install:
+    #- type: command
+    # description: Install GSD into this project (--local rewrites paths + wires hooks)
+    # command: npx -y @opengsd/gsd-core@1.7.0 --claude --local
+    # timeoutSec: 300
+
+# =============================================================================
+# NOT migrated — genuine caveats (left out on purpose, not oversight):
+#
+# 1. claude-in-chrome MCP: driven by the Chrome extension, not file config — can't
+#    be declared from what's on disk.
+#
+# 2. codebase-memory + context7-mcp SKILLS (in ~/.claude/skills): shipped by their
+#    MCP tools' own installers (codebase-memory-mcp configures agents on install),
+#    so they follow the tool, not APM. The MCP *servers* are wired above.
+#
+# 3. tdd-planned SKILL: ORIGINAL personal work — a hand-written "graft" of
+#    superpowers:test-driven-development + mattpocock tdd (self-documents this in
+#    its Provenance section). No external upstream exists. To bring it into APM,
+#    put it in your OWN skills repo/registry, then declare it like the others:
+#      # - <you>/skills/skills/tdd-planned
+#    (or a local-path dep for dev: `- path: ./skills/tdd-planned`).
+# =============================================================================
